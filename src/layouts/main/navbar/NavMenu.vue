@@ -30,11 +30,19 @@ export default {
   name: 'NavMenu',
   data() {
     return {
-      navBarItem: [],
+      navBarItem: [
+        {
+          title: '首页',
+          link: '/',
+          target: '',
+        },
+        {
+          title: 'GitHub',
+          link: 'https://github.com/Harlucy/Nexus',
+          target: '_blank',
+        },
+      ],
     };
-  },
-  created() {
-    this.navBarItem = window.config.menuItem;
   },
   methods: {
     collapsedMenu() {
