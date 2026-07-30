@@ -77,18 +77,27 @@ subweb/
 
 ## ⚙️ 配置说明
 
-### 环境变量 (.env)
+只需编辑 `.env` 文件，所有配置都在这里：
+
+```bash
+cp .env.example .env
+vim .env
+```
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `SERVER_IP` | 服务器地址 | - |
 | `API_URL` | Subconverter 地址 | `http://localhost:25500` |
+| `CONFIG_SERVER` | 配置服务器地址 | `http://localhost:25503` |
 | `YAMLFORGE_BACKEND` | YamlForge 地址 | `http://localhost:25501` |
 | `YAMLFORGE_API_KEY` | YamlForge API Key | - |
 | `SHLINK_BACKEND` | Shlink 地址 | `http://localhost:25502` |
 | `SHLINK_API_KEY` | Shlink API Key | - |
+| `SHLINK_PUBLIC_URL` | Shlink 公开地址 | `http://localhost:25502` |
 | `WEB_PORT` | Web 界面端口 | `25504` |
 | `SITE_NAME` | 网站标题 | `Nexus` |
+
+> 前端配置 `config.js` 会在启动时根据 `.env` 自动生成，无需手动配置。
 
 ## 🔒 安全说明
 

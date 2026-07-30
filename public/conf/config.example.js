@@ -1,19 +1,16 @@
+// 此文件由 start.sh 根据 .env 自动生成
+// 请勿直接编辑此文件，修改 .env 配置即可
 window.config = {
-  // 网站标题
-  siteName: 'Nexus',
-  // Subconverter API 地址
-  apiUrl: 'http://localhost:25500',
-  // 配置服务器地址（留空则使用当前域名）
-  configServer: 'http://localhost:25503',
-  // YamlForge 配置
+  siteName: '__SITE_NAME__',
+  apiUrl: '__API_URL__',
+  configServer: '__CONFIG_SERVER__',
   yamlforge: {
-    backend: 'http://localhost:25501',
-    apiKey: '',
+    backend: '__YAMLFORGE_BACKEND__',
+    apiKey: '__YAMLFORGE_API_KEY__',
   },
-  // Shlink 配置
   shlink: {
-    backend: 'http://localhost:25502',
-    apiKey: '',
-    publicUrl: 'http://localhost:25502',
+    backend: '__SHLINK_BACKEND__',
+    apiKey: '__SHLINK_API_KEY__',
+    publicUrl: '__SHLINK_PUBLIC_URL__',
   },
 };
