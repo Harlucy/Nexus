@@ -24,19 +24,14 @@
 
 ```bash
 git clone https://github.com/Harlucy/Nexus.git
-cd subweb
+cd Nexus
 ```
 
 ### 2. 配置
 
 ```bash
-# 复制配置文件
 cp .env.example .env
-cp public/conf/config.example.js public/conf/config.js
-
-# 编辑配置（填入你的服务器地址和订阅链接）
-vim .env
-vim public/conf/config.js
+vim .env  # 填入你的服务器地址和 API Key
 ```
 
 ### 3. 启动
@@ -62,22 +57,22 @@ cat data/config/auth.json
 ## 📁 项目结构
 
 ```
-subweb/
+Nexus/
 ├── src/                        # 前端源码
 ├── server/                     # 配置服务器
 ├── public/conf/
-│   ├── config.example.js      # 配置模板
-│   └── config.js              # 实际配置（git忽略）
+│   └── config.example.js      # 配置模板
 ├── data/                       # 持久化数据（git忽略）
 ├── docker-compose.yml
 ├── Dockerfile                  # 多阶段构建
+├── start.sh                    # 启动脚本（自动生成config.js）
 ├── .env.example               # 环境变量模板
 └── README.md
 ```
 
 ## ⚙️ 配置说明
 
-只需编辑 `.env` 文件，所有配置都在这里：
+只需编辑 `.env` 文件：
 
 ```bash
 cp .env.example .env
@@ -140,7 +135,7 @@ MIT License - 详见 [LICENSE](LICENSE)
 
 ## 🙏 致谢
 
-- [Harlucy/Nexus](https://github.com/Harlucy/Nexus) - 原项目
+- [stilleshan/subweb](https://github.com/stilleshan/subweb) - 原项目
 - [subconverter](https://github.com/tindy2013/subconverter) - 订阅转换核心
 - [YamlForge](https://github.com/peasoft/NoMoreWalls) - YAML 处理工具
 - [Shlink](https://shlink.io/) - 短链接服务
