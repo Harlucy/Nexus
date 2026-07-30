@@ -4,6 +4,7 @@ window.config = {
   siteName: '__SITE_NAME__',
   apiUrl: '__API_URL__',
   configServer: '__CONFIG_SERVER__',
+  adminPath: '__ADMIN_PATH__',
   yamlforge: {
     backend: '__YAMLFORGE_BACKEND__',
     apiKey: '__YAMLFORGE_API_KEY__',

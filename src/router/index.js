@@ -1,5 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
+// 从 config 获取后台路径
+const getAdminPath = () => {
+  return (window.config && window.config.adminPath) || 'admin';
+};
+
 const routes = [
   {
     path: '/login',
@@ -20,7 +25,7 @@ const routes = [
     ],
   },
   {
-    path: '/wl9w5sv019c98n9t',
+    path: `/${getAdminPath()}`,
     component: () => import('@/views/admin/AdminView.vue'),
     name: 'admin',
     meta: { requiresAuth: true },
@@ -37,10 +42,8 @@ router.beforeEach((to, from, next) => {
   const token = sessionStorage.getItem('admin_token');
   
   if (to.meta.requiresAuth && !token) {
-    // 未认证，跳转到登录页
     next('/login');
   } else if (to.path === '/login' && token) {
-    // 已认证，跳转到主页
     next('/');
   } else {
     next();
