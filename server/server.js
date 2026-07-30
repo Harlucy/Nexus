@@ -168,12 +168,12 @@ const defaultConfig = {
     { value: 'https://example.com/script1.js', text: '脚本1' },
     { value: 'https://example.com/script2.js', text: '脚本2' }
   ],
-  apiUrl: 'http://localhost:25500',
-  yamlforgeBackend: 'http://localhost:25501',
-  yamlforgeApiKey: '',
-  shlinkBackend: 'http://localhost:25502',
-  shlinkApiKey: '',
-  shlinkPublicUrl: 'http://localhost:25502'
+  apiUrl: process.env.API_URL || 'http://localhost:25500',
+  yamlforgeBackend: process.env.YAMLFORGE_BACKEND || 'http://localhost:25501',
+  yamlforgeApiKey: process.env.YAMLFORGE_API_KEY || '',
+  shlinkBackend: process.env.SHLINK_BACKEND || 'http://localhost:25502',
+  shlinkApiKey: process.env.SHLINK_API_KEY || '',
+  shlinkPublicUrl: process.env.SHLINK_PUBLIC_URL || 'http://localhost:25502'
 };
 
 function loadConfig() {

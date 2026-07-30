@@ -45,6 +45,12 @@ services:
       - TZ=Asia/Shanghai
       - CONFIG_FILE=/app/data/config.json
       - AUTH_FILE=/app/data/auth.json
+      - API_URL=${API_URL:-http://localhost:25500}
+      - YAMLFORGE_BACKEND=${YAMLFORGE_BACKEND:-http://localhost:25501}
+      - YAMLFORGE_API_KEY=${YAMLFORGE_API_KEY:-}
+      - SHLINK_BACKEND=${SHLINK_BACKEND:-http://localhost:25502}
+      - SHLINK_API_KEY=${SHLINK_API_KEY:-}
+      - SHLINK_PUBLIC_URL=${SHLINK_PUBLIC_URL:-http://localhost:25502}
     volumes:
       - ./data/config:/app/data
 
