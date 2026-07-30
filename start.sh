@@ -1,53 +1,65 @@
 #!/bin/sh
 
-# 复制默认配置
-if [ ! -f /usr/share/nginx/html/conf/config.js ]; then
-  cp /app/dist/conf/config.js /usr/share/nginx/html/conf/
+# 配置文件路径
+CONFIG_FILE=/usr/share/nginx/html/conf/config.js
+
+# 如果配置文件不存在，从模板复制
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "配置文件不存在，使用默认配置"
+  exit 1
 fi
+
+echo "==============================="
+echo "  Nexus 配置初始化"
+echo "==============================="
 
 # Subconverter API 地址
 if [ "$API_URL" ]; then
-  echo "当前 API 地址为: $API_URL"
-  sed -i "s|http://82.158.91.229:25500|$API_URL|g" /usr/share/nginx/html/conf/config.js
-fi
-
-# YamlForge 配置
-if [ "$YAMLFORGE_BACKEND" ]; then
-  echo "当前 YamlForge 后端地址为: $YAMLFORGE_BACKEND"
-  sed -i "s|http://82.158.91.229:25501|$YAMLFORGE_BACKEND|g" /usr/share/nginx/html/conf/config.js
-fi
-
-if [ "$YAMLFORGE_API_KEY" ]; then
-  echo "已配置 YamlForge API Key"
-  sed -i "s|47UJdTgW8JZLchH8Wrc|$YAMLFORGE_API_KEY|g" /usr/share/nginx/html/conf/config.js
-fi
-
-# Shlink 配置
-if [ "$SHLINK_BACKEND" ]; then
-  echo "当前 Shlink 后端地址为: $SHLINK_BACKEND"
-  sed -i "s|http://82.158.91.229:25502|$SHLINK_BACKEND|g" /usr/share/nginx/html/conf/config.js
-fi
-
-if [ "$SHLINK_API_KEY" ]; then
-  echo "已配置 Shlink API Key"
-  sed -i "s|2iDiMtFkGbtnJkSY7JkpeW8p|$SHLINK_API_KEY|g" /usr/share/nginx/html/conf/config.js
-fi
-
-if [ "$SHLINK_PUBLIC_URL" ]; then
-  echo "当前 Shlink 公开URL为: $SHLINK_PUBLIC_URL"
-  sed -i "s|http://82.158.91.229:25502|$SHLINK_PUBLIC_URL|g" /usr/share/nginx/html/conf/config.js
+  echo "Subconverter: $API_URL"
+  sed -i "s|http://localhost:25500|$API_URL|g" "$CONFIG_FILE"
 fi
 
 # 配置服务器地址
 if [ "$CONFIG_SERVER" ]; then
-  echo "当前配置服务器地址为: $CONFIG_SERVER"
-  # 在前端代码中替换配置服务器地址
-  find /usr/share/nginx/html -name "*.js" -exec sed -i "s|http://localhost:25503|$CONFIG_SERVER|g" {} \;
+  echo "Config Server: $CONFIG_SERVER"
+  sed -i "s|http://localhost:25503|$CONFIG_SERVER|g" "$CONFIG_FILE"
+fi
+
+# YamlForge 配置
+if [ "$YAMLFORGE_BACKEND" ]; then
+  echo "YamlForge: $YAMLFORGE_BACKEND"
+  sed -i "s|http://localhost:25501|$YAMLFORGE_BACKEND|g" "$CONFIG_FILE"
+fi
+
+if [ "$YAMLFORGE_API_KEY" ]; then
+  echo "YamlForge API Key: 已配置"
+  sed -i "s|apiKey: ''|apiKey: '$YAMLFORGE_API_KEY'|g" "$CONFIG_FILE"
+fi
+
+# Shlink 配置
+if [ "$SHLINK_BACKEND" ]; then
+  echo "Shlink: $SHLINK_BACKEND"
+  sed -i "s|http://localhost:25502|$SHLINK_BACKEND|g" "$CONFIG_FILE"
+fi
+
+if [ "$SHLINK_API_KEY" ]; then
+  echo "Shlink API Key: 已配置"
+  sed -i "s|apiKey: ''|apiKey: '$SHLINK_API_KEY'|g" "$CONFIG_FILE"
+fi
+
+if [ "$SHLINK_PUBLIC_URL" ]; then
+  echo "Shlink Public URL: $SHLINK_PUBLIC_URL"
+  sed -i "s|publicUrl: 'http://localhost:25502'|publicUrl: '$SHLINK_PUBLIC_URL'|g" "$CONFIG_FILE"
 fi
 
 # 网站标题
 if [ "$SITE_NAME" ]; then
-  sed -i "s|Subconverter Web|$SITE_NAME|g" /usr/share/nginx/html/conf/config.js
+  echo "Site Name: $SITE_NAME"
+  sed -i "s|siteName: 'Nexus'|siteName: '$SITE_NAME'|g" "$CONFIG_FILE"
 fi
+
+echo "==============================="
+echo "  启动 Nginx"
+echo "==============================="
 
 nginx -g "daemon off;"
