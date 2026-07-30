@@ -1,0 +1,81 @@
+services:
+  # Subconverter 订阅转换服务
+  subconverter:
+    image: asdlokj1qpi23/subconverter:latest
+    container_name: subconverter
+    ports:
+      - "25500:25500"
+    restart: always
+    environment:
+      - api_mode=true
+      - TZ=Asia/Shanghai
+
+  # YamlForge YAML 处理服务
+  yamlforge:
+    image: utopeadia/yamlforge:latest
+    container_name: yamlforge
+    restart: always
+    ports:
+      - "25501:19527"
+    environment:
+      - TZ=Asia/Shanghai
+      - API_KEY=${YAMLFORGE_API_KEY:-}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Shlink 短链接服务
+  shlink:
+    image: shlinkio/shlink:latest
+    container_name: shlink
+    ports:
+      - "25502:8080"
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - DEFAULT_DOMAIN=${SHLINK_DOMAIN:-localhost}
+      - IS_HTTPS_ENABLED=${SHLINK_HTTPS:-false}
+      - INITIAL_API_KEY=${SHLINK_API_KEY:-}
+    volumes:
+      - ./data/shlink:/var/lib/shlink
+
+  # 配置管理服务器
+  config-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "25503:25503"
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - CONFIG_FILE=/app/data/config.json
+      - AUTH_FILE=/app/data/auth.json
+    volumes:
+      - ./data/config:/app/data
+
+  # Subweb 前端界面
+  subweb:
+    build: .
+    container_name: subweb
+    ports:
+      - "${WEB_PORT:-25504}:80"
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - API_URL=${API_URL:-http://localhost:25500}
+      - YAMLFORGE_BACKEND=${YAMLFORGE_BACKEND:-http://localhost:25501}
+      - YAMLFORGE_API_KEY=${YAMLFORGE_API_KEY:-}
+      - SHLINK_BACKEND=${SHLINK_BACKEND:-http://localhost:25502}
+      - SHLINK_API_KEY=${SHLINK_API_KEY:-}
+      - SHLINK_PUBLIC_URL=${SHLINK_PUBLIC_URL:-http://localhost:25502}
+      - CONFIG_SERVER=${CONFIG_SERVER:-http://localhost:25503}
+      - SITE_NAME=${SITE_NAME:-Nexus}
+    depends_on:
+      - subconverter
+      - yamlforge
+      - shlink
+      - config-server

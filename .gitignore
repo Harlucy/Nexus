@@ -1,0 +1,20 @@
+# 依赖
+node_modules/
+server/node_modules/
+
+# 构建产物
+dist/
+
+# 数据目录（持久化存储）
+data/
+
+# 环境变量和敏感配置
+.env
+public/conf/config.js
+server/auth.json
+server/config.json
+
+# 系统文件
+.DS_Store
+*.bak
+*.log
