@@ -1,7 +1,7 @@
 #!/bin/bash
-# 查看 TOTP 密钥的脚本（需要在服务器上执行）
+# 查看 TOTP 密钥
 
-AUTH_FILE="${AUTH_FILE:-./server/auth.json}"
+AUTH_FILE="data/config/auth.json"
 
 if [ ! -f "$AUTH_FILE" ]; then
     echo "错误: auth.json 不存在"
@@ -9,7 +9,7 @@ if [ ! -f "$AUTH_FILE" ]; then
     exit 1
 fi
 
-SECRET=$(cat "$AUTH_FILE" | grep -o '"totpSecret":"[^"]*"' | cut -d'"' -f4)
+SECRET=$(grep -o '"totpSecret":"[^"]*"' "$AUTH_FILE" | cut -d'"' -f4)
 
 if [ -z "$SECRET" ]; then
     echo "错误: 无法读取密钥"
@@ -23,7 +23,7 @@ echo ""
 echo "密钥: $SECRET"
 echo ""
 echo "添加链接:"
-echo "otpauth://totp/SubWeb:admin@subweb?secret=$SECRET&issuer=SubWeb&algorithm=SHA1&digits=6&period=30"
+echo "otpauth://totp/Nexus:admin?secret=$SECRET&issuer=Nexus&algorithm=SHA1&digits=6&period=30"
 echo ""
 echo "请使用 Google Authenticator 等应用扫描或手动输入密钥"
 echo "================================="

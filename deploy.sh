@@ -1,18 +1,34 @@
 #!/bin/bash
-
-# SubWeb 部署脚本
-
 set -e
 
 echo "==================================="
-echo "  SubWeb 部署脚本"
+echo "  Nexus 部署脚本"
 echo "==================================="
 
-# 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
+
+# 检查 .env
+check_env() {
+    if [ ! -f .env ]; then
+        echo -e "${YELLOW}未找到 .env 文件${NC}"
+        echo "正在从 .env.example 创建..."
+        cp .env.example .env
+        echo -e "${GREEN}.env 已创建，请编辑 .env 填入你的配置${NC}"
+        echo ""
+        echo "必填项："
+        echo "  - API_URL (你的 subconverter 域名)"
+        echo "  - YAMLFORGE_API_KEY"
+        echo "  - SHLINK_API_KEY"
+        echo "  - SHLINK_DOMAIN (你的短链接域名)"
+        echo ""
+        echo "编辑完成后重新运行此脚本"
+        exit 0
+    fi
+    echo -e "${GREEN}.env 文件已存在${NC}"
+}
 
 # 检查依赖
 check_dependencies() {
@@ -23,18 +39,8 @@ check_dependencies() {
         exit 1
     fi
     
-    if ! command -v docker compose &> /dev/null; then
+    if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
         echo -e "${RED}错误: 未安装 docker compose${NC}"
-        exit 1
-    fi
-    
-    if ! command -v node &> /dev/null; then
-        echo -e "${RED}错误: 未安装 node${NC}"
-        exit 1
-    fi
-    
-    if ! command -v npm &> /dev/null; then
-        echo -e "${RED}错误: 未安装 npm${NC}"
         exit 1
     fi
     
@@ -48,55 +54,71 @@ create_data_dirs() {
     echo -e "${GREEN}数据目录创建完成${NC}"
 }
 
-# 安装依赖并构建
-build_frontend() {
-    echo -e "${YELLOW}安装前端依赖...${NC}"
-    npm install
-    
-    echo -e "${YELLOW}构建前端...${NC}"
-    npm run build
-    
-    echo -e "${GREEN}前端构建完成${NC}"
-}
-
 # 启动服务
 start_services() {
     echo -e "${YELLOW}启动 Docker 服务...${NC}"
     docker compose up -d --build
-    
     echo -e "${GREEN}服务启动完成${NC}"
+}
+
+# 获取 TOTP 密钥
+get_totp() {
+    echo -e "${YELLOW}等待配置服务器启动...${NC}"
+    sleep 3
+    
+    AUTH_FILE="data/config/auth.json"
+    if [ -f "$AUTH_FILE" ]; then
+        SECRET=$(grep -o '"totpSecret":"[^"]*"' "$AUTH_FILE" | cut -d'"' -f4)
+        if [ -n "$SECRET" ]; then
+            echo ""
+            echo "================================="
+            echo -e "${GREEN}  TOTP 密钥${NC}"
+            echo "================================="
+            echo ""
+            echo "密钥: $SECRET"
+            echo ""
+            echo "请用 Google Authenticator 添加此密钥"
+            echo "================================="
+        fi
+    else
+        echo -e "${YELLOW}TOTP 密钥将在首次启动时生成${NC}"
+        echo "查看日志: docker compose logs config-server"
+    fi
 }
 
 # 显示信息
 show_info() {
+    # 从 .env 读取域名
+    source .env 2>/dev/null || true
+    
+    SUB_DOMAIN=${SUB_DOMAIN:-localhost}
+    CONV_DOMAIN=${API_URL:-localhost}
+    ADMIN=${ADMIN_PATH:-admin}
+    
     echo ""
     echo "==================================="
     echo -e "${GREEN}  部署完成！${NC}"
     echo "==================================="
     echo ""
-    echo "服务端口:"
-    echo "  - subconverter: 25500"
-    echo "  - yamlforge:    25501"
-    echo "  - shlink:       25502"
-    echo "  - config-server: 25503"
-    echo "  - subweb:       25504"
+    echo "服务端口（仅本地访问）:"
+    echo "  - subconverter: 127.0.0.1:25500"
+    echo "  - yamlforge:    127.0.0.1:25501"
+    echo "  - shlink:       127.0.0.1:25502"
+    echo "  - config-server: 127.0.0.1:25503"
+    echo "  - subweb:       127.0.0.1:25504"
     echo ""
-    echo "访问地址:"
-    echo "  http://$(hostname -I | awk '{print $1}'):25504"
-    echo ""
-    echo "首次访问需要设置 TOTP 两步验证"
-    echo ""
-    echo "后台管理地址:"
-    echo "  http://$(hostname -I | awk '{print $1}'):25504/wl9w5sv019c98n9t"
+    echo "请配置反向代理将域名指向上述端口"
+    echo "详见 README.md"
     echo ""
 }
 
 # 主流程
 main() {
+    check_env
     check_dependencies
     create_data_dirs
-    build_frontend
     start_services
+    get_totp
     show_info
 }
 

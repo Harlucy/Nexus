@@ -1,275 +1,136 @@
 <template>
-  <div class="admin-container">
-    <div class="admin-header">
+  <div class="admin-page">
+    <header class="admin-header">
       <h1>后台管理</h1>
       <div>
-        <router-link to="/" class="btn btn-outline-secondary btn-sm">返回首页</router-link>
-        <button @click="logout" class="btn btn-outline-danger btn-sm ms-2">退出</button>
+        <el-button size="small" @click="$router.push('/')">返回首页</el-button>
+        <el-button size="small" type="danger" @click="logout">退出</el-button>
       </div>
-    </div>
+    </header>
 
-    <div class="admin-section">
+    <section class="admin-section">
       <h2>节点集合</h2>
-      <div class="link-list">
-        <div v-for="(item, index) in config.nodeOptions" :key="'node-' + index" class="link-item">
-          <input v-model="item.text" class="form-control form-control-sm" placeholder="名称" />
-          <input v-model="item.value" class="form-control form-control-sm" placeholder="链接" />
-          <button @click="removeItem('nodeOptions', index)" class="btn btn-danger btn-sm">删除</button>
-        </div>
+      <div v-for="(item, i) in config.nodeOptions" :key="'n'+i" class="link-item">
+        <el-input v-model="item.text" placeholder="名称" />
+        <el-input v-model="item.value" placeholder="链接" />
+        <el-button type="danger" size="small" @click="config.nodeOptions.splice(i, 1)">删除</el-button>
       </div>
-      <button @click="addItem('nodeOptions')" class="btn btn-primary btn-sm mt-2">添加节点</button>
-    </div>
+      <el-button size="small" type="primary" @click="config.nodeOptions.push({ value: '', text: '' })">添加节点</el-button>
+    </section>
 
-    <div class="admin-section">
+    <section class="admin-section">
       <h2>规则配置</h2>
-      <div class="link-list">
-        <div v-for="(item, index) in config.ruleOptions" :key="'rule-' + index" class="link-item">
-          <input v-model="item.text" class="form-control form-control-sm" placeholder="名称" />
-          <input v-model="item.value" class="form-control form-control-sm" placeholder="链接" />
-          <button @click="removeItem('ruleOptions', index)" class="btn btn-danger btn-sm">删除</button>
-        </div>
+      <div v-for="(item, i) in config.ruleOptions" :key="'r'+i" class="link-item">
+        <el-input v-model="item.text" placeholder="名称" />
+        <el-input v-model="item.value" placeholder="链接" />
+        <el-button type="danger" size="small" @click="config.ruleOptions.splice(i, 1)">删除</el-button>
       </div>
-      <button @click="addItem('ruleOptions')" class="btn btn-primary btn-sm mt-2">添加规则</button>
-    </div>
+      <el-button size="small" type="primary" @click="config.ruleOptions.push({ value: '', text: '' })">添加规则</el-button>
+    </section>
 
-    <div class="admin-section">
+    <section class="admin-section">
       <h2>YamlForge JS脚本</h2>
-      <div class="link-list">
-        <div v-for="(item, index) in config.yamlforgeScripts" :key="'script-' + index" class="link-item">
-          <input v-model="item.text" class="form-control form-control-sm" placeholder="名称" />
-          <input v-model="item.value" class="form-control form-control-sm" placeholder="链接" />
-          <button @click="removeItem('yamlforgeScripts', index)" class="btn btn-danger btn-sm">删除</button>
-        </div>
+      <div v-for="(item, i) in config.yamlforgeScripts" :key="'s'+i" class="link-item">
+        <el-input v-model="item.text" placeholder="名称" />
+        <el-input v-model="item.value" placeholder="链接" />
+        <el-button type="danger" size="small" @click="config.yamlforgeScripts.splice(i, 1)">删除</el-button>
       </div>
-      <button @click="addItem('yamlforgeScripts')" class="btn btn-primary btn-sm mt-2">添加脚本</button>
-    </div>
+      <el-button size="small" type="primary" @click="config.yamlforgeScripts.push({ value: '', text: '' })">添加脚本</el-button>
+    </section>
 
-    <div class="admin-section">
+    <section class="admin-section">
       <h2>API配置</h2>
-      <div class="config-form">
-        <div class="mb-3">
-          <label class="form-label">Subconverter API</label>
-          <input v-model="config.apiUrl" class="form-control" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">YamlForge 后端</label>
-          <input v-model="config.yamlforgeBackend" class="form-control" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">YamlForge API Key</label>
-          <input v-model="config.yamlforgeApiKey" class="form-control" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Shlink 后端</label>
-          <input v-model="config.shlinkBackend" class="form-control" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Shlink API Key</label>
-          <input v-model="config.shlinkApiKey" class="form-control" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Shlink 公开URL</label>
-          <input v-model="config.shlinkPublicUrl" class="form-control" />
-        </div>
-      </div>
-    </div>
+      <el-form label-width="140px">
+        <el-form-item label="Subconverter API"><el-input v-model="config.apiUrl" /></el-form-item>
+        <el-form-item label="YamlForge 后端"><el-input v-model="config.yamlforgeBackend" /></el-form-item>
+        <el-form-item label="YamlForge API Key"><el-input v-model="config.yamlforgeApiKey" /></el-form-item>
+        <el-form-item label="Shlink 后端"><el-input v-model="config.shlinkBackend" /></el-form-item>
+        <el-form-item label="Shlink API Key"><el-input v-model="config.shlinkApiKey" /></el-form-item>
+        <el-form-item label="Shlink 公开URL"><el-input v-model="config.shlinkPublicUrl" /></el-form-item>
+      </el-form>
+    </section>
 
     <div class="admin-actions">
-      <button @click="saveConfig" class="btn btn-success" :disabled="saving">
-        {{ saving ? '保存中...' : '保存配置' }}
-      </button>
-      <button @click="resetConfig" class="btn btn-warning">重置默认</button>
-      <span v-if="saveMessage" class="save-message" :class="saveSuccess ? 'text-success' : 'text-danger'">
-        {{ saveMessage }}
-      </span>
+      <el-button type="primary" :loading="saving" @click="saveConfig">保存配置</el-button>
+      <el-button type="warning" @click="resetConfig">重置默认</el-button>
+      <span v-if="msg" :class="msgOk ? 'text-success' : 'text-danger'">{{ msg }}</span>
     </div>
   </div>
 </template>
 
 <script>
-const API_BASE = (window.config && window.config.configServer) 
-  ? window.config.configServer + '/api' 
-  : window.location.origin + '/api';
+import axios from 'axios'
+import { showSuccess, showError } from '@/utils/api'
+
+const API_BASE = window.config?.configServer
+  ? `${window.config.configServer}/api`
+  : '/api'
 
 export default {
   name: 'AdminView',
   data() {
     return {
       config: {
-        nodeOptions: [],
-        ruleOptions: [],
-        yamlforgeScripts: [],
-        apiUrl: '',
-        yamlforgeBackend: '',
-        yamlforgeApiKey: '',
-        shlinkBackend: '',
-        shlinkApiKey: '',
-        shlinkPublicUrl: '',
+        nodeOptions: [], ruleOptions: [], yamlforgeScripts: [],
+        apiUrl: '', yamlforgeBackend: '', yamlforgeApiKey: '',
+        shlinkBackend: '', shlinkApiKey: '', shlinkPublicUrl: '',
       },
-      saving: false,
-      saveMessage: '',
-      saveSuccess: false,
-    };
+      saving: false, msg: '', msgOk: false,
+    }
   },
-  created() {
-    this.loadConfig();
-  },
+  created() { this.loadConfig() },
   methods: {
     logout() {
-      sessionStorage.removeItem('admin_token');
-      this.$router.push('/login');
+      sessionStorage.removeItem('admin_token')
+      this.$router.push('/login')
     },
-    
-    getToken() {
-      return sessionStorage.getItem('admin_token');
+    authHeaders() {
+      return { Authorization: `Bearer ${sessionStorage.getItem('admin_token')}` }
     },
-    
     async loadConfig() {
       try {
-        const response = await fetch(`${API_BASE}/config`, {
-          headers: { 'Authorization': `Bearer ${this.getToken()}` }
-        });
-        
-        if (response.status === 401) {
-          this.logout();
-          return;
-        }
-        
-        const result = await response.json();
-        if (result.success) {
-          this.config = result.data;
-        }
+        const res = await axios.get(`${API_BASE}/config`, { headers: this.authHeaders() })
+        if (res.data.success) this.config = res.data.data
       } catch (e) {
-        console.error('Failed to load config:', e);
+        if (e.response?.status === 401) this.logout()
       }
     },
-    
     async saveConfig() {
-      this.saving = true;
-      this.saveMessage = '';
-      
+      this.saving = true; this.msg = ''
       try {
-        const response = await fetch(`${API_BASE}/config`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.getToken()}`
-          },
-          body: JSON.stringify(this.config),
-        });
-        
-        if (response.status === 401) {
-          this.logout();
-          return;
-        }
-        
-        const result = await response.json();
-        this.saveMessage = result.success ? '配置已保存' : '保存失败';
-        this.saveSuccess = result.success;
+        const res = await axios.post(`${API_BASE}/config`, this.config, { headers: this.authHeaders() })
+        this.msg = res.data.success ? '配置已保存' : '保存失败'
+        this.msgOk = res.data.success
       } catch (e) {
-        this.saveMessage = '保存失败';
-        this.saveSuccess = false;
+        if (e.response?.status === 401) { this.logout(); return }
+        this.msg = '保存失败'; this.msgOk = false
       }
-      
-      this.saving = false;
-      setTimeout(() => { this.saveMessage = ''; }, 3000);
+      this.saving = false
+      setTimeout(() => { this.msg = '' }, 3000)
     },
-    
     async resetConfig() {
-      if (!confirm('确定要重置为默认配置吗？')) return;
-      
       try {
-        const response = await fetch(`${API_BASE}/config/reset`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${this.getToken()}` }
-        });
-        
-        if (response.status === 401) {
-          this.logout();
-          return;
-        }
-        
-        const result = await response.json();
-        if (result.success) {
-          this.config = result.data;
-          this.saveMessage = '已重置为默认配置';
-          this.saveSuccess = true;
-        }
+        const res = await axios.post(`${API_BASE}/config/reset`, null, { headers: this.authHeaders() })
+        if (res.data.success) { this.config = res.data.data; showSuccess('已重置为默认配置') }
       } catch (e) {
-        this.saveMessage = '重置失败';
+        if (e.response?.status === 401) { this.logout(); return }
+        showError('重置失败')
       }
-      
-      setTimeout(() => { this.saveMessage = ''; }, 3000);
-    },
-    
-    addItem(listName) {
-      this.config[listName].push({ value: '', text: '' });
-    },
-    removeItem(listName, index) {
-      this.config[listName].splice(index, 1);
     },
   },
-};
+}
 </script>
 
 <style scoped>
-.admin-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.admin-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #eee;
-}
-
-.admin-section {
-  margin-bottom: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.admin-section h2 {
-  margin-bottom: 15px;
-  font-size: 18px;
-  color: #333;
-}
-
-.link-item {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.link-item input:first-child {
-  width: 200px;
-}
-
-.link-item input:nth-child(2) {
-  flex: 1;
-}
-
-.config-form {
-  max-width: 600px;
-}
-
-.admin-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 2px solid #eee;
-}
-
-.save-message {
-  margin-left: 10px;
-  font-weight: 500;
-}
+.admin-page { max-width: 1000px; margin: 0 auto; padding: 24px; }
+.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #eee; }
+.admin-header h1 { margin: 0; font-size: 22px; }
+.admin-section { margin-bottom: 24px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+.admin-section h2 { margin: 0 0 12px; font-size: 16px; }
+.link-item { display: flex; gap: 10px; margin-bottom: 10px; }
+.link-item .el-input:first-child { width: 180px; flex-shrink: 0; }
+.link-item .el-input:nth-child(2) { flex: 1; }
+.admin-actions { display: flex; align-items: center; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 2px solid #eee; }
+.text-success { color: #67c23a; font-weight: 500; }
+.text-danger { color: #f56c6c; font-weight: 500; }
 </style>

@@ -19,6 +19,7 @@
 ### 前置要求
 
 - Docker 和 Docker Compose
+- 反向代理（如 Nginx）用于 HTTPS
 
 ### 1. 克隆项目
 
@@ -31,7 +32,27 @@ cd Nexus
 
 ```bash
 cp .env.example .env
-vim .env  # 填入你的服务器地址和 API Key
+vim .env
+```
+
+填入你的域名和 API Key：
+
+```bash
+# 你的服务域名
+API_URL=https://conv.example.com
+YAMLFORGE_BACKEND=https://forge.example.com
+SHLINK_BACKEND=https://s.example.com
+SHLINK_PUBLIC_URL=https://s.example.com
+SHLINK_DOMAIN=s.example.com
+SHLINK_HTTPS=true
+
+# API Keys
+YAMLFORGE_API_KEY=your-key
+SHLINK_API_KEY=your-key
+
+# 前端配置
+ADMIN_PATH=admin-your-secret-path
+SITE_NAME=Nexus
 ```
 
 ### 3. 启动
@@ -40,9 +61,39 @@ vim .env  # 填入你的服务器地址和 API Key
 docker compose up -d
 ```
 
-就这么简单！Docker 会自动完成依赖安装和前端构建。
+Docker 会自动完成依赖安装和前端构建。
 
-### 4. 获取 TOTP 密钥
+### 4. 配置反向代理
+
+服务启动后，需要配置反向代理将域名指向本地端口：
+
+| 域名 | 本地端口 | 说明 |
+|------|---------|------|
+| `sub.example.com` | `127.0.0.1:25504` | Web 界面 |
+| `conv.example.com` | `127.0.0.1:25500` | Subconverter API |
+| `forge.example.com` | `127.0.0.1:25501` | YamlForge |
+| `s.example.com` | `127.0.0.1:25502` | Shlink 短链接 |
+
+Nginx 示例：
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name sub.example.com;
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:25504;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+### 5. 获取 TOTP 密钥
 
 ```bash
 # 查看日志获取密钥
@@ -52,68 +103,48 @@ docker compose logs config-server
 cat data/config/auth.json
 ```
 
-然后用 Google Authenticator 添加密钥即可登录。
+用 Google Authenticator 添加密钥后即可登录。
 
 ## 📁 项目结构
 
 ```
 Nexus/
-├── src/                        # 前端源码
-├── server/                     # 配置服务器
+├── src/                        # 前端源码（Vue 3）
+├── server/                     # 配置服务器（Express）
 ├── public/conf/
-│   └── config.example.js      # 配置模板
-├── data/                       # 持久化数据（git忽略）
+│   └── config.example.js      # 前端配置模板
+├── data/                       # 持久化数据（gitignore）
 ├── docker-compose.yml
 ├── Dockerfile                  # 多阶段构建
-├── start.sh                    # 启动脚本（自动生成config.js）
+├── start.sh                    # 启动脚本（生成 config.js）
 ├── .env.example               # 环境变量模板
 └── README.md
 ```
 
-## ⚙️ 配置说明
-
-只需编辑 `.env` 文件：
-
-```bash
-cp .env.example .env
-vim .env
-```
+## ⚙️ 环境变量说明
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `SERVER_IP` | 服务器地址 | - |
 | `API_URL` | Subconverter 地址 | `http://localhost:25500` |
-| `CONFIG_SERVER` | 配置服务器地址 | `http://localhost:25503` |
 | `YAMLFORGE_BACKEND` | YamlForge 地址 | `http://localhost:25501` |
 | `YAMLFORGE_API_KEY` | YamlForge API Key | - |
 | `SHLINK_BACKEND` | Shlink 地址 | `http://localhost:25502` |
 | `SHLINK_API_KEY` | Shlink API Key | - |
 | `SHLINK_PUBLIC_URL` | Shlink 公开地址 | `http://localhost:25502` |
-| `WEB_PORT` | Web 界面端口 | `25504` |
+| `SHLINK_DOMAIN` | Shlink 短链域名 | `localhost` |
+| `SHLINK_HTTPS` | Shlink 是否启用 HTTPS | `false` |
+| `ADMIN_PATH` | 后台管理路径 | `admin` |
 | `SITE_NAME` | 网站标题 | `Nexus` |
-
-> 前端配置 `config.js` 会在启动时根据 `.env` 自动生成，无需手动配置。
 
 ## 🔒 安全说明
 
-- **TOTP 密钥**：首次启动自动生成，保存在 `data/config/auth.json`，不会在网页显示
+- 所有端口只绑定 `127.0.0.1`，需通过反向代理暴露
+- **TOTP 密钥**：首次启动自动生成，保存在 `data/config/auth.json`
 - **API 认证**：所有配置 API 需要 Bearer Token
 - **频率限制**：每分钟最多 5 次验证尝试
 - **Token 有效期**：24 小时
 
-## 📡 服务端口
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| subconverter | 25500 | 订阅转换核心 |
-| yamlforge | 25501 | YAML 处理 |
-| shlink | 25502 | 短链接服务 |
-| config-server | 25503 | 配置管理 API |
-| subweb | 25504 | Web 界面 |
-
 ## 🛠️ 本地开发
-
-如需本地开发调试：
 
 ```bash
 # 安装依赖

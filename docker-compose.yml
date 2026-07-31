@@ -3,7 +3,7 @@ services:
     image: asdlokj1qpi23/subconverter:latest
     container_name: subconverter
     ports:
-      - "25500:25500"
+      - "127.0.0.1:25500:25500"
     restart: always
     environment:
       - api_mode=true
@@ -14,21 +14,23 @@ services:
     container_name: yamlforge
     restart: always
     ports:
-      - "25501:19527"
+      - "127.0.0.1:25501:19527"
     environment:
       - TZ=Asia/Shanghai
       - API_KEY=${YAMLFORGE_API_KEY:-}
+    volumes:
+      - ./data/yamlforge:/app/data
 
   shlink:
     image: shlinkio/shlink:latest
     container_name: shlink
-    ports:
-      - "25502:8080"
     restart: always
+    ports:
+      - "127.0.0.1:25502:8080"
     environment:
       - TZ=Asia/Shanghai
       - DEFAULT_DOMAIN=${SHLINK_DOMAIN:-localhost}
-      - IS_HTTPS_ENABLED=false
+      - IS_HTTPS_ENABLED=${SHLINK_HTTPS:-false}
       - INITIAL_API_KEY=${SHLINK_API_KEY:-}
     volumes:
       - ./data/shlink:/var/lib/shlink
@@ -39,7 +41,7 @@ services:
       dockerfile: Dockerfile
     container_name: config-server
     ports:
-      - "25503:25503"
+      - "127.0.0.1:25503:25503"
     restart: always
     environment:
       - TZ=Asia/Shanghai
@@ -58,12 +60,11 @@ services:
     build: .
     container_name: subweb
     ports:
-      - "${WEB_PORT:-25504}:80"
+      - "127.0.0.1:25504:80"
     restart: always
     environment:
       - TZ=Asia/Shanghai
       - API_URL=${API_URL:-http://localhost:25500}
-      - CONFIG_SERVER=${CONFIG_SERVER:-http://localhost:25503}
       - ADMIN_PATH=${ADMIN_PATH:-admin}
       - YAMLFORGE_BACKEND=${YAMLFORGE_BACKEND:-http://localhost:25501}
       - YAMLFORGE_API_KEY=${YAMLFORGE_API_KEY:-}
