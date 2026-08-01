@@ -170,3 +170,38 @@ MIT License - 详见 [LICENSE](LICENSE)
 - [subconverter](https://github.com/tindy2013/subconverter) - 订阅转换核心
 - [YamlForge](https://github.com/peasoft/NoMoreWalls) - YAML 处理工具
 - [Shlink](https://shlink.io/) - 短链接服务
+
+## 🔄 更新部署
+
+```bash
+cd Nexus
+
+# 拉取最新代码
+git pull
+
+# 重新构建并启动
+docker compose up -d --build
+```
+
+## 📋 常用命令
+
+```bash
+# 查看所有服务日志
+docker compose logs -f
+
+# 查看某个服务的日志
+docker compose logs -f subweb
+docker compose logs -f config-server
+
+# 重启单个服务
+docker compose restart subweb
+
+# 停止所有服务
+docker compose down
+
+# 完全重建（清除旧镜像）
+docker compose up -d --build --force-recreate
+
+# 查看 TOTP 密钥
+./get-totp.sh
+```
