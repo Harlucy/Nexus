@@ -179,7 +179,9 @@ export default {
       const apiKey = window.config?.yamlforge?.apiKey || ''
       if (!backend) { showWarning('请配置 YamlForge 后端地址'); return null }
       let url = `${backend}/yamlprocess?api_key=${apiKey}&source=${encodeURIComponent(subUrl)}&merge=${encodeURIComponent(this.yamlforge.selectedScript)}`
-      if (this.yamlforge.filename) url += `&filename=${encodeURIComponent(this.yamlforge.filename)}`
+      let filename = this.yamlforge.filename
+      if (filename && !filename.match(/\.ya?ml$/i)) filename += ".yaml"
+      if (filename) url += `&filename=${encodeURIComponent(filename)}`
       return url
     },
 
@@ -187,6 +189,19 @@ export default {
       const subUrl = this.buildSubconverterUrl()
       this.result.subUrl = this.yamlforge.enabled ? (this.buildYamlForgeUrl(subUrl) || '') : subUrl
       if (this.result.subUrl) this.toCopy(this.result.subUrl, '订阅链接')
+    },
+
+    buildShlinkTags() {
+      const parts = []
+      const nodeName = (this.nodeOptions.find(o => o.value === this.selectedNode)?.text || "UnknownNode").split(' - ')[0]
+      const ruleName = (this.ruleOptions.find(o => o.value === this.selectedRule)?.text || "UnknownRule").split(' - ')[0]
+      parts.push(nodeName)
+      parts.push(ruleName)
+      if (this.yamlforge.enabled && this.yamlforge.selectedScript) {
+        const scriptName = (this.yamlforge.scriptOptions.find(o => o.value === this.yamlforge.selectedScript)?.text || '').split(' - ')[0]
+        if (scriptName) parts.push(scriptName)
+      }
+      return [parts.join('-')]
     },
 
     async generateShlinkUrl() {
@@ -203,7 +218,7 @@ export default {
         const res = await axios.post(`${backend}/rest/v3/short-urls`, {
           longUrl: finalUrl,
           customSlug: this.shlink.customSlug || undefined,
-          tags: ['Subscription'],
+          tags: this.buildShlinkTags(),
         }, { headers: { 'X-Api-Key': apiKey, 'Content-Type': 'application/json' } })
 
         if (res.data?.shortUrl) {

@@ -32,6 +32,7 @@ services:
       - DEFAULT_DOMAIN=${SHLINK_DOMAIN:-localhost}
       - IS_HTTPS_ENABLED=${SHLINK_HTTPS:-false}
       - INITIAL_API_KEY=${SHLINK_API_KEY:-}
+      - DB_DRIVER=sqlite
     volumes:
       - ./data/shlink:/var/lib/shlink
 
