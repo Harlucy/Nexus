@@ -50,7 +50,7 @@ check_dependencies() {
 # 创建数据目录
 create_data_dirs() {
     echo -e "${YELLOW}创建数据目录...${NC}"
-    mkdir -p data/config data/shlink
+    mkdir -p data/config
     echo -e "${GREEN}数据目录创建完成${NC}"
 }
 
@@ -59,31 +59,6 @@ start_services() {
     echo -e "${YELLOW}启动 Docker 服务...${NC}"
     docker compose up -d --build
     echo -e "${GREEN}服务启动完成${NC}"
-}
-
-# 获取 TOTP 密钥
-get_totp() {
-    echo -e "${YELLOW}等待配置服务器启动...${NC}"
-    sleep 3
-    
-    AUTH_FILE="data/config/auth.json"
-    if [ -f "$AUTH_FILE" ]; then
-        SECRET=$(grep -o '"totpSecret":"[^"]*"' "$AUTH_FILE" | cut -d'"' -f4)
-        if [ -n "$SECRET" ]; then
-            echo ""
-            echo "================================="
-            echo -e "${GREEN}  TOTP 密钥${NC}"
-            echo "================================="
-            echo ""
-            echo "密钥: $SECRET"
-            echo ""
-            echo "请用 Google Authenticator 添加此密钥"
-            echo "================================="
-        fi
-    else
-        echo -e "${YELLOW}TOTP 密钥将在首次启动时生成${NC}"
-        echo "查看日志: docker compose logs config-server"
-    fi
 }
 
 # 显示信息
@@ -100,12 +75,14 @@ show_info() {
     echo -e "${GREEN}  部署完成！${NC}"
     echo "==================================="
     echo ""
-    echo "服务端口（仅本地访问）:"
-    echo "  - subconverter: 127.0.0.1:25500"
-    echo "  - yamlforge:    127.0.0.1:25501"
-    echo "  - shlink:       127.0.0.1:25502"
-    echo "  - config-server: 127.0.0.1:25503"
-    echo "  - subweb:       127.0.0.1:25504"
+echo "本地服务端口（仅本机访问）:"
+echo "  - config-server: 127.0.0.1:25503"
+echo "  - subweb:        127.0.0.1:25504"
+echo ""
+echo "远端后端地址（来自 .env）:"
+echo "  - subconverter: ${API_URL:-未设置}"
+echo "  - yamlforge:    ${YAMLFORGE_BACKEND:-未设置}"
+echo "  - shlink:       ${SHLINK_BACKEND:-未设置}"
     echo ""
     echo "请配置反向代理将域名指向上述端口"
     echo "详见 README.md"
@@ -118,7 +95,6 @@ main() {
     check_dependencies
     create_data_dirs
     start_services
-    get_totp
     show_info
 }
 

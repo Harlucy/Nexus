@@ -3,166 +3,46 @@ import cors from 'cors';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import crypto from 'crypto';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const APP_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+function loadDotEnv(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  for (const line of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (!match || match[1] in process.env) continue;
+    let value = match[2];
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[match[1]] = value;
+  }
+}
+
+loadDotEnv(join(APP_ROOT, '.env'));
 
 const app = express();
-const PORT = 25503;
-const CONFIG_FILE = process.env.CONFIG_FILE || join(__dirname, 'config.json');
+const HOST = '127.0.0.1';
+const PORT = Number(process.env.PORT || 25503);
+const STATIC_DIR = process.env.STATIC_DIR || join(APP_ROOT, 'dist');
+const CONFIG_FILE = process.env.CONFIG_FILE || join(APP_ROOT, 'data', 'config', 'config.json');
 
 app.use(cors());
 app.use(express.json());
 
-// ============ TOTP 实现 ============
+const RULE_BASE = 'https://raw.githubusercontent.com/Harlucy/howmagicrule/refs/heads/main';
 
-function base32Encode(buffer) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const byte of buffer) {
-    bits += byte.toString(2).padStart(8, '0');
-  }
-  let result = '';
-  for (let i = 0; i < bits.length; i += 5) {
-    const chunk = bits.substr(i, 5).padEnd(5, '0');
-    result += alphabet[parseInt(chunk, 2)];
-  }
-  return result;
-}
-
-function generateSecret() {
-  const buffer = crypto.randomBytes(20);
-  return base32Encode(buffer);
-}
-
-function base32Decode(secret) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const char of secret.toUpperCase()) {
-    const val = alphabet.indexOf(char);
-    if (val === -1) continue;
-    bits += val.toString(2).padStart(5, '0');
-  }
-  const key = Buffer.alloc(Math.floor(bits.length / 8));
-  for (let i = 0; i < key.length; i++) {
-    key[i] = parseInt(bits.substr(i * 8, 8), 2);
-  }
-  return key;
-}
-
-function generateTOTP(secret, timeOffset = 0) {
-  const key = base32Decode(secret);
-  const counter = Math.floor(Date.now() / 1000 / 30) + timeOffset;
-  const counterBuffer = Buffer.alloc(8);
-  counterBuffer.writeUInt32BE(0, 0);
-  counterBuffer.writeUInt32BE(counter, 4);
-  
-  const hmac = crypto.createHmac('sha1', key);
-  hmac.update(counterBuffer);
-  const hash = hmac.digest();
-  
-  const offset = hash[hash.length - 1] & 0x0f;
-  const code = (
-    ((hash[offset] & 0x7f) << 24) |
-    ((hash[offset + 1] & 0xff) << 16) |
-    ((hash[offset + 2] & 0xff) << 8) |
-    (hash[offset + 3] & 0xff)
-  ) % 1000000;
-  
-  return code.toString().padStart(6, '0');
-}
-
-function verifyTOTP(secret, token) {
-  for (let i = -1; i <= 1; i++) {
-    if (generateTOTP(secret, i) === token) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// ============ 认证存储 ============
-
-const AUTH_FILE = process.env.AUTH_FILE || join(__dirname, 'auth.json');
-const RATE_LIMIT_WINDOW = 60000;
-const MAX_ATTEMPTS = 5;
-
-let authConfig = {
-  totpSecret: null,
-  initialized: true
-};
-
-let rateLimitStore = {};
-let validTokens = new Set();
-
-function loadOrInitAuthConfig() {
-  try {
-    if (fs.existsSync(AUTH_FILE)) {
-      const data = fs.readFileSync(AUTH_FILE, 'utf8');
-      const saved = JSON.parse(data);
-      if (saved.totpSecret) {
-        authConfig.totpSecret = saved.totpSecret;
-        console.log('已加载TOTP密钥');
-        return;
-      }
-    }
-  } catch (e) {
-    console.error('Error loading auth config:', e);
-  }
-  
-  authConfig.totpSecret = generateSecret();
-  saveAuthConfig();
-  console.log('=================================');
-  console.log('已生成新的TOTP密钥:');
-  console.log(authConfig.totpSecret);
-  console.log('=================================');
-}
-
-function saveAuthConfig() {
-  try {
-    const dir = dirname(AUTH_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(AUTH_FILE, JSON.stringify(authConfig, null, 2));
-  } catch (e) {
-    console.error('Error saving auth config:', e);
-  }
-}
-
-loadOrInitAuthConfig();
-
-function getClientIP(req) {
-  return req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
-}
-
-function checkRateLimit(ip) {
-  const now = Date.now();
-  const limit = rateLimitStore[ip];
-  
-  if (!limit || now > limit.resetTime) {
-    rateLimitStore[ip] = { count: 1, resetTime: now + RATE_LIMIT_WINDOW };
-    return { allowed: true, remaining: MAX_ATTEMPTS - 1 };
-  }
-  
-  if (limit.count >= MAX_ATTEMPTS) {
-    const waitSeconds = Math.ceil((limit.resetTime - now) / 1000);
-    return { allowed: false, remaining: 0, waitSeconds };
-  }
-  
-  limit.count++;
-  return { allowed: true, remaining: MAX_ATTEMPTS - limit.count };
-}
-
-// 默认配置（示例，用户需要根据自己的情况修改）
 const defaultConfig = {
-  nodeOptions: [
-    { value: 'https://example.com/your-subscription.txt', text: '订阅源' }
-  ],
+  nodeOptions: [{ value: 'https://example.com/your-subscription.txt', text: '订阅源' }],
   ruleOptions: [
-    { value: 'https://example.com/rule1.ini', text: '规则1' },
-    { value: 'https://example.com/rule2.ini', text: '规则2' }
+    { value: `${RULE_BASE}/clash-rule.ini`, text: '白名单模式（漏网走代理）' },
+    { value: `${RULE_BASE}/clash-rule-manual.ini`, text: '白名单手动模式（漏网走代理）' },
+    { value: `${RULE_BASE}/clash-rule-black.ini`, text: '黑名单模式（漏网走直连）' },
+    { value: `${RULE_BASE}/clash-rule-black-manual.ini`, text: '黑名单手动模式（漏网走直连）' },
+    { value: `${RULE_BASE}/clash-rule-general.ini`, text: '通用精简模式（漏网走代理）' },
+    { value: `${RULE_BASE}/clash-rule-gocn.ini`, text: '回国模式（漏网走直连）' },
+    { value: `${RULE_BASE}/clash-rule-manual-test.ini`, text: '手动测试模式（漏网走代理）' },
+    { value: `${RULE_BASE}/clash-rule-ad.ini`, text: '白名单 + 广告拦截（补充规则）' }
   ],
   yamlforgeScripts: [
     { value: 'https://example.com/script1.js', text: '脚本1' },
@@ -177,115 +57,107 @@ const defaultConfig = {
 };
 
 function loadConfig() {
-  try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      const data = fs.readFileSync(CONFIG_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (e) {
-    console.error('Error reading config:', e);
-  }
-  return null;
+  if (!fs.existsSync(CONFIG_FILE)) return { ...defaultConfig };
+  return { ...defaultConfig, ...JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')) };
 }
 
 function saveConfig(config) {
-  try {
-    const dir = dirname(CONFIG_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
-    return true;
-  } catch (e) {
-    console.error('Error writing config:', e);
-    return false;
-  }
+  fs.mkdirSync(dirname(CONFIG_FILE), { recursive: true });
+  // Replace atomically so an interrupted save does not truncate the live config.
+  const temporary = `${CONFIG_FILE}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify(config, null, 2));
+  fs.renameSync(temporary, CONFIG_FILE);
 }
 
-// ============ API 路由 ============
-
-app.get('/api/auth/status', (req, res) => {
-  res.json({
-    success: true,
-    initialized: authConfig.initialized,
-    hasSecret: !!authConfig.totpSecret
-  });
-});
-
-app.post('/api/auth/login', (req, res) => {
-  const ip = getClientIP(req);
-  const { token } = req.body;
-  
-  const rateCheck = checkRateLimit(ip);
-  if (!rateCheck.allowed) {
-    return res.status(429).json({
-      success: false,
-      message: `请求过于频繁，请${rateCheck.waitSeconds}秒后重试`,
-      waitSeconds: rateCheck.waitSeconds
-    });
-  }
-  
-  if (!token || !verifyTOTP(authConfig.totpSecret, token)) {
-    return res.json({
-      success: false,
-      message: '验证码错误',
-      remaining: rateCheck.remaining
-    });
-  }
-  
-  const accessToken = crypto.randomBytes(32).toString('hex');
-  validTokens.add(accessToken);
-  
-  setTimeout(() => {
-    validTokens.delete(accessToken);
-  }, 86400000);
-  
-  res.json({
-    success: true,
-    token: accessToken,
-    expiresIn: 86400
-  });
-});
-
-function requireAuth(req, res, next) {
-  const token = req.headers['authorization']?.replace('Bearer ', '');
-  
-  if (!token || !validTokens.has(token)) {
-    return res.status(401).json({
-      success: false,
-      message: '未授权'
-    });
-  }
-  
-  next();
-}
-
-app.get('/api/config', requireAuth, (req, res) => {
+app.get('/conf/config.js', (req, res) => {
   const config = loadConfig();
-  res.json({ success: true, data: config || defaultConfig });
+  const frontendConfig = {
+    siteName: process.env.SITE_NAME || 'Nexus',
+    adminPath: process.env.ADMIN_PATH || 'admin',
+    apiUrl: config.apiUrl,
+    yamlforge: { backend: config.yamlforgeBackend, apiKey: config.yamlforgeApiKey },
+    shlink: { backend: config.shlinkBackend, apiKey: config.shlinkApiKey, publicUrl: config.shlinkPublicUrl }
+  };
+  res.set('Cache-Control', 'no-store').type('application/javascript')
+    .send(`window.config = ${JSON.stringify(frontendConfig)};\n`);
 });
 
-app.post('/api/config', requireAuth, (req, res) => {
-  if (saveConfig(req.body)) {
-    res.json({ success: true, message: '配置已保存' });
-  } else {
-    res.status(500).json({ success: false, message: '保存失败' });
-  }
+app.get('/api/config', (req, res) => {
+  res.set('Cache-Control', 'no-store').json({ success: true, data: loadConfig() });
 });
 
-app.post('/api/config/reset', requireAuth, (req, res) => {
-  if (saveConfig(defaultConfig)) {
-    res.json({ success: true, message: '已重置', data: defaultConfig });
-  } else {
-    res.status(500).json({ success: false, message: '重置失败' });
+app.post('/api/config', (req, res) => {
+  if (!req.body || Array.isArray(req.body) || typeof req.body !== 'object') {
+    return res.status(400).json({ success: false, message: '配置格式错误' });
   }
+  saveConfig({ ...defaultConfig, ...req.body });
+  res.json({ success: true, message: '配置已保存' });
+});
+
+app.post('/api/config/reset', (req, res) => {
+  saveConfig(defaultConfig);
+  res.json({ success: true, message: '已重置', data: defaultConfig });
+});
+
+// Proxy Shlink through the local server to avoid browser CORS restrictions.
+async function shlinkRequest(req, res, method, path, query = {}) {
+  try {
+    const config = loadConfig();
+    if (!config.shlinkBackend || !config.shlinkApiKey) {
+      return res.status(400).json({ message: '请先配置 Shlink 后端地址和 API Key' });
+    }
+    const url = new URL(`${config.shlinkBackend.replace(/\/$/, '')}/rest/v3/${path}`);
+    for (const [key, value] of Object.entries(query)) {
+      if (typeof value === 'string' && value) url.searchParams.set(key, value);
+    }
+    const response = await fetch(url, {
+      method,
+      headers: { 'X-Api-Key': config.shlinkApiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: method === 'GET' ? undefined : JSON.stringify(req.body),
+      signal: AbortSignal.timeout(20000)
+    });
+    const body = await response.text();
+    if (!body) return res.status(response.status).end();
+    res.status(response.status).json(JSON.parse(body));
+  } catch (error) {
+    console.error('Shlink request failed:', error.message);
+    res.status(502).json({ message: '无法连接 Shlink 服务，请检查后端地址和网络' });
+  }
+}
+
+app.get('/api/shlink/short-urls', (req, res) => {
+  const { page, itemsPerPage, searchTerm } = req.query;
+  return shlinkRequest(req, res, 'GET', 'short-urls', { page, itemsPerPage, searchTerm });
+});
+
+app.post('/api/shlink/short-urls', (req, res) => {
+  return shlinkRequest(req, res, 'POST', 'short-urls');
+});
+
+app.patch('/api/shlink/short-urls/:shortCode', (req, res) => {
+  return shlinkRequest(req, res, 'PATCH', `short-urls/${encodeURIComponent(req.params.shortCode)}`, { domain: req.query.domain });
+});
+
+app.delete('/api/shlink/short-urls/:shortCode', (req, res) => {
+  return shlinkRequest(req, res, 'DELETE', `short-urls/${encodeURIComponent(req.params.shortCode)}`, { domain: req.query.domain });
 });
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`配置服务器运行在 http://localhost:${PORT}`);
-  console.log(`TOTP密钥文件: ${AUTH_FILE}`);
+app.use(express.static(STATIC_DIR, { index: 'index.html' }));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(join(STATIC_DIR, 'index.html'));
+});
+app.use((error, req, res, next) => {
+  console.error('Local server error:', error.message);
+  res.status(error.status || 500).json({ success: false, message: '请求处理失败，请检查本地配置文件' });
+});
+
+const server = app.listen(PORT, HOST, () => {
+  console.log(`Nexus 本地服务运行在 http://${HOST}:${server.address().port}`);
+  console.log(`前端目录: ${STATIC_DIR}`);
+  console.log(`配置文件: ${CONFIG_FILE}`);
 });

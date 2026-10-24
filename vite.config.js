@@ -9,6 +9,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  server: { port: 8080 },
+  server: {
+    host: '127.0.0.1',
+    port: 8080,
+    proxy: {
+      '/api': 'http://127.0.0.1:25503',
+      '/conf/config.js': 'http://127.0.0.1:25503',
+    },
+  },
   build: { outDir: 'dist', assetsDir: 'assets' },
 })

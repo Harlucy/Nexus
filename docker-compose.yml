@@ -1,41 +1,4 @@
 services:
-  subconverter:
-    image: asdlokj1qpi23/subconverter:latest
-    container_name: subconverter
-    ports:
-      - "127.0.0.1:25500:25500"
-    restart: always
-    environment:
-      - api_mode=true
-      - TZ=Asia/Shanghai
-
-  yamlforge:
-    image: utopeadia/yamlforge:latest
-    container_name: yamlforge
-    restart: always
-    ports:
-      - "127.0.0.1:25501:19527"
-    environment:
-      - TZ=Asia/Shanghai
-      - API_KEY=${YAMLFORGE_API_KEY:-}
-    volumes:
-      - ./data/yamlforge:/app/data
-
-  shlink:
-    image: shlinkio/shlink:latest
-    container_name: shlink
-    restart: always
-    ports:
-      - "127.0.0.1:25502:8080"
-    environment:
-      - TZ=Asia/Shanghai
-      - DEFAULT_DOMAIN=${SHLINK_DOMAIN:-localhost}
-      - IS_HTTPS_ENABLED=${SHLINK_HTTPS:-false}
-      - INITIAL_API_KEY=${SHLINK_API_KEY:-}
-      - DB_DRIVER=sqlite
-    volumes:
-      - ./data/shlink:/var/lib/shlink
-
   config-server:
     build:
       context: ./server
@@ -47,7 +10,6 @@ services:
     environment:
       - TZ=Asia/Shanghai
       - CONFIG_FILE=/app/data/config.json
-      - AUTH_FILE=/app/data/auth.json
       - API_URL=${API_URL:-http://localhost:25500}
       - YAMLFORGE_BACKEND=${YAMLFORGE_BACKEND:-http://localhost:25501}
       - YAMLFORGE_API_KEY=${YAMLFORGE_API_KEY:-}
@@ -73,8 +35,3 @@ services:
       - SHLINK_API_KEY=${SHLINK_API_KEY:-}
       - SHLINK_PUBLIC_URL=${SHLINK_PUBLIC_URL:-http://localhost:25502}
       - SITE_NAME=${SITE_NAME:-Nexus}
-    depends_on:
-      - subconverter
-      - yamlforge
-      - shlink
-      - config-server

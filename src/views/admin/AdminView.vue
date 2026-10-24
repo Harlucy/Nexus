@@ -4,7 +4,7 @@
       <h1>后台管理</h1>
       <div>
         <el-button size="small" @click="$router.push('/')">返回首页</el-button>
-        <el-button size="small" type="danger" @click="logout">退出</el-button>
+        <el-button size="small" @click="$router.push('/short-links')">短链接管理</el-button>
       </div>
     </header>
 
@@ -59,12 +59,7 @@
 </template>
 
 <script>
-import axios from 'axios'
-import { showSuccess, showError } from '@/utils/api'
-
-const API_BASE = window.config?.configServer
-  ? `${window.config.configServer}/api`
-  : '/api'
+import { apiRequest, showSuccess, showError } from '@/utils/api'
 
 export default {
   name: 'AdminView',
@@ -80,40 +75,32 @@ export default {
   },
   created() { this.loadConfig() },
   methods: {
-    logout() {
-      sessionStorage.removeItem('admin_token')
-      this.$router.push('/login')
-    },
-    authHeaders() {
-      return { Authorization: `Bearer ${sessionStorage.getItem('admin_token')}` }
-    },
     async loadConfig() {
       try {
-        const res = await axios.get(`${API_BASE}/config`, { headers: this.authHeaders() })
-        if (res.data.success) this.config = res.data.data
+        const res = await apiRequest('get', '/config')
+        if (res.success) this.config = res.data
       } catch (e) {
-        if (e.response?.status === 401) this.logout()
+        showError('配置加载失败')
       }
     },
     async saveConfig() {
       this.saving = true; this.msg = ''
       try {
-        const res = await axios.post(`${API_BASE}/config`, this.config, { headers: this.authHeaders() })
-        this.msg = res.data.success ? '配置已保存' : '保存失败'
-        this.msgOk = res.data.success
+        const res = await apiRequest('post', '/config', this.config)
+        this.msg = res.success ? '配置已保存' : '保存失败'
+        this.msgOk = res.success
       } catch (e) {
-        if (e.response?.status === 401) { this.logout(); return }
         this.msg = '保存失败'; this.msgOk = false
+      } finally {
+        this.saving = false
       }
-      this.saving = false
       setTimeout(() => { this.msg = '' }, 3000)
     },
     async resetConfig() {
       try {
-        const res = await axios.post(`${API_BASE}/config/reset`, null, { headers: this.authHeaders() })
-        if (res.data.success) { this.config = res.data.data; showSuccess('已重置为默认配置') }
+        const res = await apiRequest('post', '/config/reset')
+        if (res.success) { this.config = res.data; showSuccess('已重置为默认配置') }
       } catch (e) {
-        if (e.response?.status === 401) { this.logout(); return }
         showError('重置失败')
       }
     },
@@ -123,14 +110,22 @@ export default {
 
 <style scoped>
 .admin-page { max-width: 1000px; margin: 0 auto; padding: 24px; }
-.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #eee; }
+.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--el-border-color); }
 .admin-header h1 { margin: 0; font-size: 22px; }
-.admin-section { margin-bottom: 24px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+.admin-section { margin-bottom: 24px; padding: 20px 0; border-bottom: 1px solid var(--el-border-color); }
 .admin-section h2 { margin: 0 0 12px; font-size: 16px; }
 .link-item { display: flex; gap: 10px; margin-bottom: 10px; }
 .link-item .el-input:first-child { width: 180px; flex-shrink: 0; }
 .link-item .el-input:nth-child(2) { flex: 1; }
-.admin-actions { display: flex; align-items: center; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 2px solid #eee; }
-.text-success { color: #67c23a; font-weight: 500; }
-.text-danger { color: #f56c6c; font-weight: 500; }
+.admin-actions { display: flex; align-items: center; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 2px solid var(--el-border-color); }
+.text-success { color: var(--el-color-success); font-weight: 500; }
+.text-danger { color: var(--el-color-danger); font-weight: 500; }
+@media (max-width: 600px) {
+  .admin-page { padding: 16px; }
+  .admin-header { flex-wrap: wrap; gap: 12px; }
+  .link-item { flex-wrap: wrap; }
+  .link-item .el-input:first-child { width: 100%; }
+  .link-item .el-input:nth-child(2) { min-width: 0; }
+  .admin-actions { flex-wrap: wrap; }
+}
 </style>

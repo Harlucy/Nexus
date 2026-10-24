@@ -1,0 +1,33 @@
+:root {
+  color-scheme: light;
+  --nexus-page-bg: #f5f6f8;
+  --nexus-brand: #7367f0;
+  --nexus-header-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  --nexus-panel-shadow: 0 4px 20px rgb(0 0 0 / 6%);
+  --nexus-footer-bg: #2f3542;
+  --nexus-footer-text: #c2c5cc;
+  --nexus-footer-link: #b8b0ff;
+}
+
+html.dark {
+  color-scheme: dark;
+  --el-bg-color: #202123;
+  --el-bg-color-page: #18191b;
+  --el-bg-color-overlay: #26272a;
+  --nexus-page-bg: var(--el-bg-color-page);
+  --nexus-brand: #b8b0ff;
+  --nexus-header-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+  --nexus-panel-shadow: 0 4px 20px rgb(0 0 0 / 16%);
+  --nexus-footer-bg: #111214;
+  --nexus-footer-text: #adb0b6;
+  --nexus-footer-link: #b8b0ff;
+}
+
+body {
+  margin: 0;
+  background: var(--nexus-page-bg);
+  color: var(--el-text-color-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#app { min-height: 100vh; }

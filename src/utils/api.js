@@ -1,38 +1,17 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-// 如果配置了 configServer 就用它，否则用当前域名（通过 Nginx 反代）
+// The frontend and config server share one local origin.
 const API_BASE = window.config?.configServer
   ? `${window.config.configServer}/api`
   : '/api'
 
-export function getToken() {
-  return sessionStorage.getItem('admin_token')
-}
-
-export function clearToken() {
-  sessionStorage.removeItem('admin_token')
-}
-
-export function isLoggedIn() {
-  return !!getToken()
-}
-
 export async function apiRequest(method, path, data = null) {
   const headers = { 'Content-Type': 'application/json' }
-  const token = getToken()
-  if (token) headers['Authorization'] = `Bearer ${token}`
-
-  try {
-    const res = await axios({ method, url: `${API_BASE}${path}`, headers, data, timeout: 10000 })
-    return res.data
-  } catch (e) {
-    if (e.response?.status === 401) {
-      clearToken()
-      window.location.href = '/login'
-    }
-    throw e
-  }
+  const request = { method, url: `${API_BASE}${path}`, headers, timeout: 25000 }
+  if (data !== null && data !== undefined) request.data = data
+  const res = await axios(request)
+  return res.data
 }
 
 export function showError(msg) {

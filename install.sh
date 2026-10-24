@@ -32,6 +32,6 @@ docker compose up -d --build
 echo ""
 echo "✅ 安装完成！"
 echo ""
-echo "查看 TOTP 密钥: ./get-totp.sh"
+echo "配置页无需登录，本项目仅用于本机访问"
 echo "或查看日志: docker compose logs config-server"
 echo ""

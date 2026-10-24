@@ -1,23 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { isLoggedIn } from '@/utils/api'
 
 const routes = [
   {
     path: '/login',
-    name: 'login',
-    component: () => import('@/views/auth/AuthView.vue'),
+    redirect: '/',
   },
   {
     path: '/',
     name: 'home',
     component: () => import('@/views/home/HomeView.vue'),
-    meta: { requiresAuth: true },
+  },
+  {
+    path: '/short-links',
+    name: 'short-links',
+    component: () => import('@/views/short-links/ShortLinksView.vue'),
   },
   {
     path: '/:adminPath',
     name: 'admin',
     component: () => import('@/views/admin/AdminView.vue'),
-    meta: { requiresAuth: true },
   },
 ]
 
@@ -28,16 +29,6 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const adminPath = window.config?.adminPath || 'admin'
-
-  if (to.path === '/login') {
-    next(isLoggedIn() ? '/' : undefined)
-    return
-  }
-
-  if (to.meta.requiresAuth && !isLoggedIn()) {
-    next('/login')
-    return
-  }
 
   if (to.name === 'admin' && to.params.adminPath !== adminPath) {
     next('/')
