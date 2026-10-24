@@ -133,7 +133,6 @@ export default {
         { value: 'https://raw.githubusercontent.com/Harlucy/howmagicrule/refs/heads/main/clash-rule-black.ini', text: '黑名单模式（漏网走直连）' },
         { value: 'https://raw.githubusercontent.com/Harlucy/howmagicrule/refs/heads/main/clash-rule-black-manual.ini', text: '黑名单手动模式（漏网走直连）' },
         { value: 'https://raw.githubusercontent.com/Harlucy/howmagicrule/refs/heads/main/clash-rule-general.ini', text: '通用精简模式（漏网走代理）' },
-        { value: 'https://raw.githubusercontent.com/Harlucy/howmagicrule/refs/heads/main/clash-rule-gocn.ini', text: '回国模式（漏网走直连）' },
         { value: 'https://raw.githubusercontent.com/Harlucy/howmagicrule/refs/heads/main/clash-rule-manual-test.ini', text: '手动测试模式（漏网走代理）' },
         { value: 'https://raw.githubusercontent.com/Harlucy/howmagicrule/refs/heads/main/clash-rule-ad.ini', text: '白名单 + 广告拦截（补充规则）' },
       ],
