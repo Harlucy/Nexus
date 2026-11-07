@@ -160,7 +160,6 @@ export default {
           { value: 'https://gist.githubusercontent.com/Harlucy/47ef7ea44e01c80fe6b1364e545ebf14/raw/SOCIALUSE.js', text: 'SOCIALUSE - 普通共享使用' },
           { value: 'https://gist.githubusercontent.com/Harlucy/47ef7ea44e01c80fe6b1364e545ebf14/raw/SOCIALMOBILE.js', text: 'SOCIALMOBILE - 手机共享使用' },
           { value: 'https://gist.githubusercontent.com/Harlucy/47ef7ea44e01c80fe6b1364e545ebf14/raw/ROUTER.js', text: 'ROUTER - 路由自用' },
-          { value: 'https://gist.githubusercontent.com/Harlucy/47ef7ea44e01c80fe6b1364e545ebf14/raw/SchoolUSE.js', text: 'SchoolUSE - 校园使用' },
         ],
       },
       shlink: { customSlug: '' },
