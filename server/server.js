@@ -36,7 +36,6 @@ const defaultConfig = {
   nodeOptions: [{ value: 'https://example.com/your-subscription.txt', text: '订阅源' }],
   ruleOptions: [
     { value: `${RULE_BASE}/clash-rule.ini`, text: '白名单模式（漏网走代理）' },
-    { value: `${RULE_BASE}/clash-rule-manual.ini`, text: '白名单手动模式（漏网走代理）' },
     { value: `${RULE_BASE}/clash-rule-black.ini`, text: '黑名单模式（漏网走直连）' },
     { value: `${RULE_BASE}/clash-rule-black-manual.ini`, text: '黑名单手动模式（漏网走直连）' },
     { value: `${RULE_BASE}/clash-rule-ad.ini`, text: '白名单 + 广告拦截（补充规则）' }
